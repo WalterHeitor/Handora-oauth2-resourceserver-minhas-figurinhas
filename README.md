@@ -1,0 +1,1 @@
+# Handora-oauth2-resourceserver-minhas-figurinhas
