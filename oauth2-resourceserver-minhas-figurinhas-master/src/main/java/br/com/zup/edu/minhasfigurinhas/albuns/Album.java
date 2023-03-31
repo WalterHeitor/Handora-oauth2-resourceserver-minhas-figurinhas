@@ -72,4 +72,7 @@ public class Album {
         });
     }
 
+    public boolean pertenceAo(String username) {
+        return this.dono.equals(username);
+    }
 }
