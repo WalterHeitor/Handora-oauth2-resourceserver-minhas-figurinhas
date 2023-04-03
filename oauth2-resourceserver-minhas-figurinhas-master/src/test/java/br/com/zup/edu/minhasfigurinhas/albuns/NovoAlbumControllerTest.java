@@ -4,6 +4,9 @@ import base.SpringBootIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 
 import java.util.List;
 
@@ -24,6 +27,11 @@ class NovoAlbumControllerTest extends SpringBootIntegrationTest {
     @Test
     public void deveCadastrarNovoAlbumComSuasFigurinhas() throws Exception {
         // cenário
+        Jwt jwt = Jwt.withTokenValue("token")
+                .header("alg", "none")
+                .claim("sub", "user")
+                .claim("scope", "read")
+                .build();
         NovoAlbumRequest novoAlbum = new NovoAlbumRequest("CDZ",
                 "Cavaleiros do Zodiaco",
                 List.of(
@@ -33,7 +41,10 @@ class NovoAlbumControllerTest extends SpringBootIntegrationTest {
         );
 
         // ação
-        mockMvc.perform(POST("/api/albuns", novoAlbum))
+        mockMvc.perform(POST("/api/albuns", novoAlbum)
+                        .with(SecurityMockMvcRequestPostProcessors.jwt().jwt(jwt)
+                                .authorities( new SimpleGrantedAuthority("SCOPE_minhas-figurinhas:write"))
+                        ))
                 .andExpect(status().isCreated())
                 .andExpect(redirectedUrlPattern("**/api/albuns/*"))
                 ;
