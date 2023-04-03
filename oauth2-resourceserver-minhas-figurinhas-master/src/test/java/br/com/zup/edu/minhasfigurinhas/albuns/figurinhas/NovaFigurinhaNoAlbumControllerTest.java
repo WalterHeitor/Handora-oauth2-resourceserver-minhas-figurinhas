@@ -7,8 +7,10 @@ import br.com.zup.edu.minhasfigurinhas.albuns.Figurinha;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrlPattern;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -36,7 +38,13 @@ class NovaFigurinhaNoAlbumControllerTest extends SpringBootIntegrationTest {
                 = new NovaFigurinhaNoAlbumRequest("gohan", "http://animes.com/dbz/gohan.jpg");
 
         // ação
-        mockMvc.perform(POST(uri(ALBUM.getId()), novaFigurinha))
+        mockMvc.perform(POST(uri(ALBUM.getId()), novaFigurinha)
+                .with(jwt()
+                        .jwt(jwt -> {
+                            jwt.claim("preferred_username", ALBUM.getDono());
+                        })
+                        .authorities(new SimpleGrantedAuthority("SCOPE_minhas-figurinhas:write"))
+                ))
                 .andExpect(status().isCreated())
                 .andExpect(redirectedUrlPattern("**/api/albuns/*/figurinhas/**"))
         ;
@@ -57,7 +65,13 @@ class NovaFigurinhaNoAlbumControllerTest extends SpringBootIntegrationTest {
                 = new NovaFigurinhaNoAlbumRequest("gohan", "http://animes.com/dbz/gohan.jpg");
 
         // ação
-        mockMvc.perform(POST(uri(-2022L), figurinhaInvalida))
+        mockMvc.perform(POST(uri(-2022L), figurinhaInvalida)
+                        .with(jwt()
+                                .jwt(jwt -> {
+                                    jwt.claim("preferred_username", ALBUM.getDono());
+                                })
+                                .authorities(new SimpleGrantedAuthority("SCOPE_minhas-figurinhas:write"))
+                        ))
                 .andExpect(status().isNotFound())
                 .andExpect(status().reason("album não encontrado"))
         ;
@@ -70,7 +84,13 @@ class NovaFigurinhaNoAlbumControllerTest extends SpringBootIntegrationTest {
                 = new NovaFigurinhaNoAlbumRequest("", "");
 
         // ação
-        mockMvc.perform(POST(uri(ALBUM.getId()), figurinhaInvalida))
+        mockMvc.perform(POST(uri(ALBUM.getId()), figurinhaInvalida)
+                        .with(jwt()
+                                .jwt(jwt -> {
+                                    jwt.claim("preferred_username", ALBUM.getDono());
+                                })
+                                .authorities(new SimpleGrantedAuthority("SCOPE_minhas-figurinhas:write"))
+                        ))
                 .andExpect(status().isBadRequest())
         ;
 
@@ -83,10 +103,63 @@ class NovaFigurinhaNoAlbumControllerTest extends SpringBootIntegrationTest {
         ;
     }
 
+    @Test
+    public void naoDeveAdicionarNovaFigurinhaNoAlbum_quandoAlbumForDeOutroUsuario() throws Exception {
+        // cenario
+        NovaFigurinhaNoAlbumRequest novaFigurinha
+                = new NovaFigurinhaNoAlbumRequest("gohan", "http://animes.com/dbz/gohan.jpg");
+
+        // ação
+        mockMvc.perform(POST(uri(ALBUM.getId()), novaFigurinha)
+                        .with(jwt()
+                                .jwt(jwt -> {
+                                    jwt.claim("preferred_username", "outro-usuario");
+                                })
+                                .authorities(new SimpleGrantedAuthority("SCOPE_minhas-figurinhas:write"))
+                        ))
+                .andExpect(status().isForbidden())
+
+        ;
+
+        // validação
+        Album encontrado = repository.findByIdWithFigurinhas(ALBUM.getId());
+        assertThat(encontrado.getFigurinhas())
+                .hasSize(1)
+                .extracting("descricao")
+                .doesNotContain("gohan")
+        ;
+    }
+
+    @Test
+    public void naoDeveAdicionarNovaFigurinhaNoAlbum_quandoTokenNaoEnviado() throws Exception {
+        // cenario
+        NovaFigurinhaNoAlbumRequest novaFigurinha
+                = new NovaFigurinhaNoAlbumRequest("gohan", "http://animes.com/dbz/gohan.jpg");
+
+        // ação
+        mockMvc.perform(POST(uri(ALBUM.getId()), novaFigurinha))
+                .andExpect(status().isUnauthorized())
+        ;
+    }
+
+    @Test
+    public void naoDeveAdicionarNovaFigurinhaNoAlbum_quandoAccessTokenNaoPossuiScopeApropriado() throws Exception {
+        // cenario
+        NovaFigurinhaNoAlbumRequest novaFigurinha
+                = new NovaFigurinhaNoAlbumRequest("gohan", "http://animes.com/dbz/gohan.jpg");
+
+        // ação
+        mockMvc.perform(POST(uri(ALBUM.getId()), novaFigurinha)
+                        .with(jwt()))
+                .andExpect(status().isForbidden())
+        ;
+    }
+
     private String uri(Long albumId) {
         String uri = "/api/albuns/{albumId}/figurinhas"
                 .replace("{albumId}", albumId.toString());
         return uri;
     }
+
 
 }

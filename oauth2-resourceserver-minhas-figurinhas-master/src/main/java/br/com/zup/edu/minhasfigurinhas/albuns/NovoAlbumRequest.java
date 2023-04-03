@@ -38,6 +38,9 @@ public class NovoAlbumRequest {
     }
 
     public Album toModel(String owner) {
+        if (owner == null) {
+            owner = "anonymous";
+        }
         Album album = new Album(titulo, descricao, owner);
         figurinhas.forEach(f -> {
             Figurinha figurinha = new Figurinha(f.getDescricao(), f.getEnderecoDaImagem());
