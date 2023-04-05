@@ -20,11 +20,11 @@ spring:
       client:
         registration:
           minhas-figurinhas:
-            client-id: realocacao-squad-client
+            client-id: albuns-freemium-client
             client-secret: FLfbp4Bif01K4DzckFbm14IZKru0ku02
             authorization-grant-type: client_credentials
             #            redirect-uri: "{baseUrl}/authorized/okta"
-            scope: funcionarios:read
+            scope: albuns:read,albuns:write
         provider:
           minhas-figurinhas:
             #            authorization-uri: http://localhost:18080/auth/realms/gestao-funcionarios/protocol/openid-connect/auth

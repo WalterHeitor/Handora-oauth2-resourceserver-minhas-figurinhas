@@ -24,4 +24,16 @@ public class NovoAlbumRequest {
         this.descricao = descricao;
         this.figurinhas = figurinhas;
     }
+
+    public String getTitulo() {
+        return titulo;
+    }
+
+    public String getDescricao() {
+        return descricao;
+    }
+
+    public List<NovaFigurinhaRequest> getFigurinhas() {
+        return figurinhas;
+    }
 }
