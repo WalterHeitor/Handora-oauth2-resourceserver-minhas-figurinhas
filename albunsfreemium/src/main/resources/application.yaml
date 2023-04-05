@@ -1,0 +1,32 @@
+server:
+  port: 8081
+  servlet:
+    context-path: /minhas-figurinhas-microservice
+
+integrations.resource-server.url: http://localhost:8080/oauth2-resourceserver-minhas-figurinhas
+feign:
+  client:
+    config:
+      minhasFigurinhasClient:
+        loggerLevel: full
+logging.level.br.com.zup.edu.albunsfreemium.client.MinhasFigurinhasClient: DEBUG
+
+##
+# Client Credentials Flow
+##
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          minhas-figurinhas:
+            client-id: realocacao-squad-client
+            client-secret: FLfbp4Bif01K4DzckFbm14IZKru0ku02
+            authorization-grant-type: client_credentials
+            #            redirect-uri: "{baseUrl}/authorized/okta"
+            scope: funcionarios:read
+        provider:
+          minhas-figurinhas:
+            #            authorization-uri: http://localhost:18080/auth/realms/gestao-funcionarios/protocol/openid-connect/auth
+            token-uri: http://localhost:18080/auth/realms/gestao-funcionarios/protocol/openid-connect/token
+
